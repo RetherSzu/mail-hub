@@ -1,7 +1,7 @@
 import { app, BrowserWindow, BrowserView, ipcMain, session } from "electron";
 import path from "path";
 import Database from "better-sqlite3";
-import { autoUpdater } from "electron-updater";
+import electronUpdater from "electron-updater";
 import contextMenu from "electron-context-menu";
 
 const userDataPath = app.getPath("userData");
@@ -9,6 +9,7 @@ const dbPath = path.join(userDataPath, "accounts.db");
 //const dbPath = "accounts.db";
 // Initialize the database
 const db = new Database(dbPath);
+const autoUpdater = electronUpdater.autoUpdater;
 
 // Create the accounts table if it doesn't exist
 db.prepare(`
