@@ -35,7 +35,14 @@
         },
         "linux": {
             "icon": "assets/icon.png"
-        }
+        },
+        "publish": [
+            {
+                "provider": "github",
+                "owner": "RetherSzu",
+                "repo": "mail-hub"
+            }
+        ]
     },
     "dependencies": {
         "better-sqlite3": "^11.2.1",
