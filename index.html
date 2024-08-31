@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mails Box</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+        }
+
+        .icon {
+            padding: 2px;
+            position: relative;
+            max-width: 50px;
+            height: 50px;
+            background-color: #555;
+            border-radius: 50%;
+            margin-bottom: 15px;
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+        }
+
+        #sidebar {
+            width: 75px;
+            background-color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 10px;
+            position: relative;
+        }
+
+        .icon:hover {
+            background-color: #777;
+        }
+
+        .selected {
+            background: #7635dc;
+        }
+
+        .selected:hover {
+            background: #7635dc;
+        }
+
+        #add-account-button {
+            padding: 10px;
+            background-color: #444;
+            color: white;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+            border-radius: 50%;
+            margin: auto;
+            width: 50px;
+            height: 50px;
+        }
+
+        #add-account-button:hover {
+            background-color: #555;
+        }
+
+        #account-icon-container {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            overflow-y: auto;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+            margin-left: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+        }
+    </style>
+</head>
+<body>
+<div id="sidebar">
+    <!-- Icons of accounts will be dynamically added here -->
+    <div id="account-icon-container"></div>
+    <div style="padding: 10px">
+        <button id="add-account-button">+</button>
+    </div>
+</div>
+<script>
+    const { ipcRenderer } = require("electron");
+
+    ipcRenderer.on("add-icon", (event, { name, iconPath, iconSet }) => {
+        // Check if the icon already exists
+        const icons = document.getElementsByClassName("icon");
+        for (let icon of icons) {
+            if (icon.alt === name) {
+                return;
+            }
+        }
+
+        let newIcon = document.createElement("img");
+        newIcon.classList.add("icon");
+        newIcon.alt = name;
+        newIcon.src = iconPath;
+        newIcon.srcset = iconSet;
+        newIcon.width = 50;
+        newIcon.height = 50;
+
+        // Ajoutez un gestionnaire d'événements pour sélectionner l'icône
+        newIcon.onclick = () => {
+            ipcRenderer.send("switch-account", name);
+            // Retirer la classe "selected" de toutes les icônes
+            document.querySelectorAll(".icon").forEach(icon => icon.classList.remove("selected"));
+            // Ajouter la classe "selected" à l'icône cliquée
+            newIcon.classList.add("selected");
+        };
+
+        // Ajout du menu contextuel pour la suppression
+        newIcon.oncontextmenu = (event) => {
+            event.preventDefault();
+            const confirmed = confirm(`Voulez-vous supprimer le compte ${name} ?`);
+            if (confirmed) {
+                ipcRenderer.send("delete-account", name);
+            }
+        };
+
+        document.getElementById("account-icon-container").appendChild(newIcon);
+    });
+
+    ipcRenderer.on("profile-image", (event, { name, iconSrc, iconSet }) => {
+        const icons = document.getElementsByClassName("icon");
+        for (let icon of icons) {
+            if (icon.alt === name) {
+                icon.src = iconSrc;
+                // Replace the 64 pixels icon with the 128 pixels one
+                iconSet.replace("=s64-c-mo 2x", "=s128-c-mo 4x");
+                icon.srcset = iconSet;
+            }
+        }
+    });
+
+    ipcRenderer.on("remove-icon", (event, name) => {
+        const icons = document.getElementsByClassName("icon");
+        for (let icon of icons) {
+            if (icon.alt === name) {
+                icon.remove();
+                break;
+            }
+        }
+    });
+
+    document.getElementById("add-account-button").addEventListener("click", () => {
+        ipcRenderer.send("add-new-account");
+    });
+</script>
+</body>
+</html>
